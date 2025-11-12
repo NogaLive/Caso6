@@ -1,0 +1,26 @@
+name: ci-devsecops
+on: [push, pull_request]
+jobs:
+  build-test-sast:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Compile (javac)
+        run: |
+          mkdir -p out
+          find src/main/java -name "*.java" > sources.txt
+          javac -d out @sources.txt
+      - name: SonarQube SAST
+        uses: SonarSource/sonarqube-scan-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          args: >
+            -Dsonar.projectKey=SmartBuild
+            -Dsonar.sources=src/main/java
+            -Dsonar.java.binaries=out
